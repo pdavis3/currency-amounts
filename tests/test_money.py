@@ -62,6 +62,102 @@ FORMAT_CASES = [
 ]
 
 
+# Each row: (label, a, b, expected a + b)
+ADD_CASES = [
+    ("both positive", Money(1234, "USD"), Money(100, "USD"), Money(1334, "USD")),
+    ("mixed signs", Money(1234, "USD"), Money(-1000, "USD"), Money(234, "USD")),
+    ("yields negative", Money(100, "USD"), Money(-500, "USD"), Money(-400, "USD")),
+]
+
+# Each row: (label, a, b, expected a - b)
+SUB_CASES = [
+    ("both positive", Money(1234, "USD"), Money(100, "USD"), Money(1134, "USD")),
+    ("goes negative", Money(100, "USD"), Money(500, "USD"), Money(-400, "USD")),
+]
+
+# Each row: (label, money, factor, expected money * factor)
+MUL_CASES = [
+    ("scale up", Money(1234, "USD"), 3, Money(3702, "USD")),
+    ("scale by zero", Money(1234, "USD"), 0, Money(0, "USD")),
+    ("scale negative", Money(1234, "USD"), -2, Money(-2468, "USD")),
+]
+
+# Each row: (label, money, ratios, expected list of Money)
+ALLOCATE_CASES = [
+    ("even split with remainder", Money(1000, "USD"), [1, 1, 1],
+     [Money(334, "USD"), Money(333, "USD"), Money(333, "USD")]),
+    ("exact weighted split", Money(1000, "USD"), [2, 3, 5],
+     [Money(200, "USD"), Money(300, "USD"), Money(500, "USD")]),
+    ("negative amount", Money(-1000, "USD"), [1, 1, 1],
+     [Money(-334, "USD"), Money(-333, "USD"), Money(-333, "USD")]),
+    ("classic ten cents three ways", Money(10, "USD"), [1, 1, 1],
+     [Money(4, "USD"), Money(3, "USD"), Money(3, "USD")]),
+]
+
+
+class MoneyArithmeticTests(unittest.TestCase):
+    def test_add(self):
+        for label, a, b, expected in ADD_CASES:
+            with self.subTest(label=label):
+                self.assertEqual(a + b, expected)
+
+    def test_add_requires_same_currency(self):
+        with self.assertRaises(ValueError):
+            Money(100, "USD") + Money(100, "EUR")
+
+    def test_sub(self):
+        for label, a, b, expected in SUB_CASES:
+            with self.subTest(label=label):
+                self.assertEqual(a - b, expected)
+
+    def test_sub_requires_same_currency(self):
+        with self.assertRaises(ValueError):
+            Money(100, "USD") - Money(100, "EUR")
+
+    def test_neg(self):
+        self.assertEqual(-Money(1234, "USD"), Money(-1234, "USD"))
+        self.assertEqual(-Money(-1234, "USD"), Money(1234, "USD"))
+
+    def test_abs(self):
+        self.assertEqual(abs(Money(-1234, "USD")), Money(1234, "USD"))
+        self.assertEqual(abs(Money(1234, "USD")), Money(1234, "USD"))
+
+    def test_mul(self):
+        for label, money, factor, expected in MUL_CASES:
+            with self.subTest(label=label):
+                self.assertEqual(money * factor, expected)
+                self.assertEqual(factor * money, expected)
+
+    def test_ordering(self):
+        self.assertLess(Money(100, "USD"), Money(200, "USD"))
+        self.assertLessEqual(Money(100, "USD"), Money(100, "USD"))
+        self.assertGreater(Money(200, "USD"), Money(100, "USD"))
+        self.assertGreaterEqual(Money(100, "USD"), Money(100, "USD"))
+
+    def test_ordering_requires_same_currency(self):
+        with self.assertRaises(ValueError):
+            Money(100, "USD") < Money(100, "EUR")
+
+    def test_allocate(self):
+        for label, money, ratios, expected in ALLOCATE_CASES:
+            with self.subTest(label=label):
+                self.assertEqual(money.allocate(ratios), expected)
+
+    def test_allocate_parts_always_sum_to_original(self):
+        for units in range(0, 20):
+            money = Money(units, "USD")
+            parts = money.allocate([1, 1, 1])
+            self.assertEqual(sum(p.units for p in parts), units)
+
+    def test_allocate_rejects_empty_ratios(self):
+        with self.assertRaises(ValueError):
+            Money(100, "USD").allocate([])
+
+    def test_allocate_rejects_all_zero_ratios(self):
+        with self.assertRaises(ValueError):
+            Money(100, "USD").allocate([0, 0])
+
+
 class ParseAmountTests(unittest.TestCase):
     def test_valid_cases(self):
         for label, text, currency, expected in PARSE_CASES:

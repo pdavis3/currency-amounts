@@ -46,11 +46,19 @@ except AmountParseError as exc:
 
 # format_amount can drop the currency marker if you just want the number
 format_amount(money, symbol=False)   # "1,234.56"
+
+# Arithmetic stays exact because it's all integer minor units underneath.
+# +, -, unary -, abs(), *, and ordering all require matching currencies.
+total = parse_amount("$10.00") + parse_amount("$2.50")   # $12.50
+tripled = parse_amount("$1.25") * 3                       # $3.75
+
+# Splitting an amount N ways without losing or inventing minor units:
+parse_amount("$10.00").allocate([1, 1, 1])
+# [Money(334, 'USD'), Money(333, 'USD'), Money(333, 'USD')]
 ```
 
 `Money` is a plain value object: two fields, `units` (an `int`, in the
-currency's minor unit) and `currency` (an ISO 4217 code). There is no
-arithmetic on it yet — see the roadmap below.
+currency's minor unit) and `currency` (an ISO 4217 code).
 
 ## Known limitations
 

@@ -43,6 +43,90 @@ class Money:
     def __str__(self):
         return format_amount(self)
 
+    def __add__(self, other):
+        if not isinstance(other, Money):
+            return NotImplemented
+        self._require_same_currency(other, "add")
+        return Money(self.units + other.units, self.currency)
+
+    def __sub__(self, other):
+        if not isinstance(other, Money):
+            return NotImplemented
+        self._require_same_currency(other, "subtract")
+        return Money(self.units - other.units, self.currency)
+
+    def __neg__(self):
+        return Money(-self.units, self.currency)
+
+    def __abs__(self):
+        return Money(abs(self.units), self.currency)
+
+    def __mul__(self, factor):
+        if not isinstance(factor, int):
+            return NotImplemented
+        return Money(self.units * factor, self.currency)
+
+    __rmul__ = __mul__
+
+    def __lt__(self, other):
+        return self._compare(other) < 0
+
+    def __le__(self, other):
+        return self._compare(other) <= 0
+
+    def __gt__(self, other):
+        return self._compare(other) > 0
+
+    def __ge__(self, other):
+        return self._compare(other) >= 0
+
+    def _require_same_currency(self, other, verb):
+        if self.currency != other.currency:
+            raise ValueError(f"cannot {verb} {self.currency} and {other.currency}")
+
+    def _compare(self, other):
+        if not isinstance(other, Money):
+            raise TypeError(f"cannot compare Money with {type(other).__name__}")
+        self._require_same_currency(other, "compare")
+        return (self.units > other.units) - (self.units < other.units)
+
+    def allocate(self, ratios):
+        """Split this amount into len(ratios) parts proportional to ratios.
+
+        Plain "amount * ratio / total" splitting drops or invents minor
+        units whenever the division isn't exact (splitting 10 cents three
+        ways gives 3.33... each). This uses the largest-remainder method
+        instead: take the integer share each ratio is entitled to, then
+        hand the leftover minor units one at a time to the parts with the
+        largest dropped remainder, so the parts always sum back to exactly
+        this amount.
+        """
+        if not ratios or any(r < 0 for r in ratios) or not any(ratios):
+            raise ValueError(
+                "ratios must be a non-empty list of non-negative numbers "
+                "with at least one positive value"
+            )
+
+        total_ratio = sum(ratios)
+        negative = self.units < 0
+        magnitude = abs(self.units)
+
+        shares = [magnitude * r // total_ratio for r in ratios]
+        leftover = magnitude - sum(shares)
+
+        by_dropped_remainder = sorted(
+            range(len(ratios)),
+            key=lambda i: (magnitude * ratios[i]) % total_ratio,
+            reverse=True,
+        )
+        for i in by_dropped_remainder[:leftover]:
+            shares[i] += 1
+
+        if negative:
+            shares = [-s for s in shares]
+
+        return [Money(s, self.currency) for s in shares]
+
 
 def parse_amount(text, currency=None):
     """Parse freeform text like "$1,234.56" or "(12.00)" into a Money value.
