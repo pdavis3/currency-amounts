@@ -13,6 +13,7 @@ from .currencies import (
     DEFAULT_MINOR_UNITS,
     SYMBOL_TO_CURRENCY,
 )
+from .locales import DEFAULT_LOCALE, LOCALE_FORMATS
 
 _PARENS_RE = re.compile(r"^\((.*)\)$")
 _NUMBER_RE = re.compile(r"^[0-9](?:[0-9,.\s]*[0-9])?$")
@@ -192,12 +193,20 @@ def parse_amount(text, currency=None):
     return Money(units, currency)
 
 
-def format_amount(money, symbol=True, thousands_sep=","):
+def format_amount(money, symbol=True, thousands_sep=None, locale=None):
     """Render a Money value back into a display string.
 
-    This is intentionally a single, simple style (sign, marker, grouped
-    integer part, dot, fraction) rather than a locale-aware formatter.
+    `locale` selects a regional convention (see currency_amounts.locales)
+    for the grouping/decimal punctuation and where the currency marker
+    sits, e.g. locale="de_DE" renders 1234.56 EUR as "1.234,56 €" instead
+    of the "en_US" default "€1,234.56". An unrecognized locale falls back
+    to the default rather than raising. `thousands_sep`, if given, still
+    overrides the locale's grouping character.
     """
+    fmt = LOCALE_FORMATS.get(locale or DEFAULT_LOCALE, LOCALE_FORMATS[DEFAULT_LOCALE])
+    if thousands_sep is None:
+        thousands_sep = fmt.thousands_sep
+
     minor_digits = CURRENCY_MINOR_UNITS.get(money.currency, DEFAULT_MINOR_UNITS)
     sign = "-" if money.units < 0 else ""
     magnitude = abs(money.units)
@@ -210,13 +219,19 @@ def format_amount(money, symbol=True, thousands_sep=","):
         fraction = str(fraction_value).rjust(minor_digits, "0")
 
     grouped = _group_thousands(str(integer_units), thousands_sep)
-    body = f"{grouped}.{fraction}" if fraction else grouped
+    body = f"{grouped}{fmt.decimal_sep}{fraction}" if fraction else grouped
 
     if not symbol:
         return f"{sign}{body}"
 
-    marker = CURRENCY_TO_SYMBOL.get(money.currency, f"{money.currency} ")
-    return f"{sign}{marker}{body}"
+    known_symbol = CURRENCY_TO_SYMBOL.get(money.currency)
+    marker = known_symbol if known_symbol is not None else money.currency
+    marker_space = fmt.symbol_space if known_symbol is not None else True
+    sep = " " if marker_space else ""
+
+    if fmt.symbol_after:
+        return f"{sign}{body}{sep}{marker}"
+    return f"{sign}{marker}{sep}{body}"
 
 
 def _extract_sign(raw, original_text):

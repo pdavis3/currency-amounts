@@ -47,6 +47,12 @@ except AmountParseError as exc:
 # format_amount can drop the currency marker if you just want the number
 format_amount(money, symbol=False)   # "1,234.56"
 
+# Or render it with another locale's grouping, decimal point, and marker
+# placement instead of the US-style default:
+eur = parse_amount("1.234,56", currency="EUR")
+format_amount(eur, locale="de_DE")   # "1.234,56 €"
+format_amount(eur, locale="fr_FR")   # "1 234,56 €"
+
 # Arithmetic stays exact because it's all integer minor units underneath.
 # +, -, unary -, abs(), *, and ordering all require matching currencies.
 total = parse_amount("$10.00") + parse_amount("$2.50")   # $12.50
@@ -69,8 +75,11 @@ currency's minor unit) and `currency` (an ISO 4217 code).
   (say, `1,234`), the parser guesses based on group length rather than
   locale. This is documented and tested in `tests/test_money.py` rather
   than hidden.
-- `format_amount` produces one fixed style. It doesn't attempt to match
-  the locale conventions the input used.
+- `format_amount`'s `locale` argument covers a handful of regional
+  punctuation and marker-placement conventions (see
+  `currency_amounts/locales.py`), not every locale glibc knows about.
+  Grouping schemes that don't split digits into groups of three, like the
+  Indian lakh/crore system, aren't modeled.
 
 ## Running the tests
 

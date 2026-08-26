@@ -61,6 +61,15 @@ FORMAT_CASES = [
     ("small amount under a hundred minor units", Money(5, "USD"), "$0.05"),
 ]
 
+# Each row: (label, Money value, locale, expected rendering)
+LOCALE_FORMAT_CASES = [
+    ("german grouping and decimal comma", Money(123456, "EUR"), "de_DE", "1.234,56 €"),
+    ("french space grouping", Money(123456, "EUR"), "fr_FR", "1 234,56 €"),
+    ("swiss apostrophe grouping", Money(123456, "CHF"), "de_CH", "CHF 1'234.56"),
+    ("british matches us style", Money(123456, "GBP"), "en_GB", "£1,234.56"),
+    ("unrecognized locale falls back to default", Money(123456, "USD"), "xx_XX", "$1,234.56"),
+]
+
 
 # Each row: (label, a, b, expected a + b)
 ADD_CASES = [
@@ -184,6 +193,26 @@ class FormatAmountTests(unittest.TestCase):
         for text, currency in [("$1,234.56", None), ("KWD 12.345", None), ("¥1,000", None)]:
             money = parse_amount(text, currency)
             self.assertEqual(parse_amount(format_amount(money)), money)
+
+    def test_locale_rendering(self):
+        for label, money, locale, expected in LOCALE_FORMAT_CASES:
+            with self.subTest(label=label, money=money, locale=locale):
+                self.assertEqual(format_amount(money, locale=locale), expected)
+
+    def test_locale_punctuation_applies_without_symbol(self):
+        money = Money(123456, "EUR")
+        self.assertEqual(format_amount(money, symbol=False, locale="de_DE"), "1.234,56")
+
+    def test_explicit_thousands_sep_overrides_locale(self):
+        money = Money(123456, "EUR")
+        self.assertEqual(
+            format_amount(money, locale="de_DE", thousands_sep="_"), "1_234,56 €"
+        )
+
+    def test_round_trip_through_parse_and_format_with_locale(self):
+        money = parse_amount("1.234,56", currency="EUR")
+        rendered = format_amount(money, locale="de_DE")
+        self.assertEqual(parse_amount(rendered), money)
 
 
 if __name__ == "__main__":
