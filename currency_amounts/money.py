@@ -8,6 +8,7 @@ point never enter the picture.
 import re
 
 from .currencies import (
+    AMBIGUOUS_SYMBOLS,
     CURRENCY_MINOR_UNITS,
     CURRENCY_TO_SYMBOL,
     DEFAULT_MINOR_UNITS,
@@ -153,7 +154,7 @@ def parse_amount(text, currency=None):
         raw = parens.group(1).strip()
 
     raw, sign_before = _extract_sign(raw, text)
-    raw, detected_currency = _strip_currency_marker(raw)
+    raw, detected_currency = _strip_currency_marker(raw, currency)
     raw, sign_after = _extract_sign(raw, text)
 
     if (parens and (sign_before or sign_after)) or (sign_before and sign_after):
@@ -251,7 +252,7 @@ def _extract_sign(raw, original_text):
     return raw, False
 
 
-def _strip_currency_marker(raw):
+def _strip_currency_marker(raw, currency):
     for symbol, code in SYMBOL_TO_CURRENCY.items():
         if raw.startswith(symbol):
             return raw[len(symbol):].strip(), code
@@ -259,12 +260,27 @@ def _strip_currency_marker(raw):
             return raw[: -len(symbol)].strip(), code
 
     words = raw.split()
+    if words and words[0].lower() in AMBIGUOUS_SYMBOLS:
+        return " ".join(words[1:]).strip(), _resolve_ambiguous(words[0], currency)
+    if words and words[-1].lower() in AMBIGUOUS_SYMBOLS:
+        return " ".join(words[:-1]).strip(), _resolve_ambiguous(words[-1], currency)
+
     if words and words[0].isalpha() and len(words[0]) == 3:
         return " ".join(words[1:]).strip(), words[0].upper()
     if words and words[-1].isalpha() and len(words[-1]) == 3:
         return " ".join(words[:-1]).strip(), words[-1].upper()
 
     return raw, None
+
+
+def _resolve_ambiguous(word, currency):
+    candidates = AMBIGUOUS_SYMBOLS[word.lower()]
+    if currency in candidates:
+        return currency
+    raise AmountParseError(
+        f"{word!r} could be any of {', '.join(candidates)}; "
+        "pass the intended currency explicitly"
+    )
 
 
 def _split_integer_fraction(raw, minor_digits, original_text):

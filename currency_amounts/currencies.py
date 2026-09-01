@@ -19,13 +19,16 @@ CURRENCY_MINOR_UNITS = {
     "KWD": 3,
     "BHD": 3,
     "OMR": 3,
+    "SEK": 2,
+    "NOK": 2,
+    "DKK": 2,
+    "XAF": 0,
+    "XOF": 0,
 }
 
 DEFAULT_MINOR_UNITS = 2
 
 # Deliberately small: these four symbols are unambiguous on their own.
-# Symbols like "kr" or "Fr" are shared by several currencies and are left
-# for callers to disambiguate by passing an explicit currency code.
 SYMBOL_TO_CURRENCY = {
     "$": "USD",
     "€": "EUR",  # €
@@ -34,3 +37,12 @@ SYMBOL_TO_CURRENCY = {
 }
 
 CURRENCY_TO_SYMBOL = {code: symbol for symbol, code in SYMBOL_TO_CURRENCY.items()}
+
+# Symbols that several currencies share, so the text alone can't say which
+# one is meant. The caller has to pass the intended currency; parsing fails
+# with the candidate list rather than guessing. Not exhaustive - just the
+# two ambiguous symbols this project has actually run into so far.
+AMBIGUOUS_SYMBOLS = {
+    "kr": ("DKK", "NOK", "SEK"),
+    "fr": ("CHF", "XAF", "XOF"),
+}

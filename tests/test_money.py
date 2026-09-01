@@ -33,6 +33,10 @@ PARSE_CASES = [
     ("three-decimal currency short fraction", "KWD 12.3", None, Money(12300, "KWD")),
     ("short fraction padded", "12.3", "USD", Money(1230, "USD")),
     ("unknown code falls back to two decimals", "SEK 12.34", None, Money(1234, "SEK")),
+    ("ambiguous symbol suffix resolved by currency arg", "100 kr", "SEK", Money(10000, "SEK")),
+    ("same ambiguous symbol, different candidate", "100 kr", "NOK", Money(10000, "NOK")),
+    ("ambiguous symbol prefix resolved by currency arg", "Fr 100.50", "CHF", Money(10050, "CHF")),
+    ("ambiguous symbol uppercase", "100 KR", "DKK", Money(10000, "DKK")),
 ]
 
 # Each row: (label, input text, currency arg) -> must raise AmountParseError
@@ -47,6 +51,8 @@ PARSE_ERROR_CASES = [
     ("yen with a fraction", "¥10.00", None),
     ("too much precision for currency", "12.3456", "USD"),
     ("not a string", 1234, "USD"),
+    ("ambiguous symbol with no currency given", "100 kr", None),
+    ("ambiguous symbol with currency not a candidate", "100 kr", "USD"),
 ]
 
 # Each row: (label, Money value, expected default rendering)

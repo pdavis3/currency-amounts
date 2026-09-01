@@ -30,6 +30,15 @@ print(money.currency)        # USD
 # Currency can also come from an explicit argument when the text has none:
 parse_amount("1 234,50", currency="EUR")
 
+# Symbols shared by several currencies (kr, Fr) need that argument too,
+# since the text alone doesn't say which one is meant:
+parse_amount("100 kr", currency="SEK")
+parse_amount("100 kr", currency="NOK")
+try:
+    parse_amount("100 kr")   # no currency given, and "kr" doesn't pick one
+except AmountParseError as exc:
+    print(exc)
+
 # Negative amounts: leading minus, trailing minus, or accounting parens
 parse_amount("-12.00", currency="USD")
 parse_amount("12.00-", currency="USD")
@@ -69,8 +78,11 @@ currency's minor unit) and `currency` (an ISO 4217 code).
 ## Known limitations
 
 - Only four currency symbols are recognized directly (`$`, `€`, `£`, `¥`).
-  Symbols shared across multiple currencies, like `kr` or `Fr`, aren't
-  handled — pass the currency code explicitly instead.
+  Symbols shared across multiple currencies, like `kr` (Danish, Norwegian,
+  Swedish crowns) or `Fr` (Swiss franc, CFA francs), are recognized as
+  currency markers but can't resolve to a code on their own — pass the
+  intended currency explicitly, or parsing raises with the candidate list.
+  See `currency_amounts/currencies.py:AMBIGUOUS_SYMBOLS` for what's covered.
 - When a number has exactly one separator and no currency-specific hint
   (say, `1,234`), the parser guesses based on group length rather than
   locale. This is documented and tested in `tests/test_money.py` rather
