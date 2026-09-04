@@ -33,6 +33,11 @@ PARSE_CASES = [
     ("three-decimal currency short fraction", "KWD 12.3", None, Money(12300, "KWD")),
     ("short fraction padded", "12.3", "USD", Money(1230, "USD")),
     ("unknown code falls back to two decimals", "SEK 12.34", None, Money(1234, "SEK")),
+    ("iraqi dinar three decimals", "IQD 12.345", None, Money(12345, "IQD")),
+    ("tunisian dinar three decimals", "TND 12.345", None, Money(12345, "TND")),
+    ("chilean unidad de fomento four decimals", "CLF 1.2345", None, Money(12345, "CLF")),
+    ("rwandan franc has no minor unit", "RWF 1000", None, Money(1000, "RWF")),
+    ("icelandic krona has no minor unit", "ISK 1000", None, Money(1000, "ISK")),
     ("ambiguous symbol suffix resolved by currency arg", "100 kr", "SEK", Money(10000, "SEK")),
     ("same ambiguous symbol, different candidate", "100 kr", "NOK", Money(10000, "NOK")),
     ("ambiguous symbol prefix resolved by currency arg", "Fr 100.50", "CHF", Money(10050, "CHF")),
@@ -65,6 +70,8 @@ FORMAT_CASES = [
     ("three-decimal currency", Money(12345, "KWD"), "KWD 12.345"),
     ("unknown code uses code as marker", Money(1234, "SEK"), "SEK 12.34"),
     ("small amount under a hundred minor units", Money(5, "USD"), "$0.05"),
+    ("four-decimal currency", Money(12345, "CLF"), "CLF 1.2345"),
+    ("zero-decimal currency uses code as marker", Money(1000, "RWF"), "RWF 1,000"),
 ]
 
 # Each row: (label, Money value, locale, expected rendering)

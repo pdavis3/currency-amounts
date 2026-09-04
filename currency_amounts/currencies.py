@@ -1,29 +1,39 @@
-# ISO 4217 minor unit counts, limited to the currencies this project has
-# actually needed to parse so far. Anything missing falls back to
-# DEFAULT_MINOR_UNITS rather than raising, since most of the world uses 2.
+# ISO 4217 minor unit counts. Two digits is the default for the vast
+# majority of currencies (DEFAULT_MINOR_UNITS below), so this table only
+# needs to carry the exceptions: currencies with zero, three, or four
+# decimal digits. A code that isn't in here - whether it's a mainstream
+# 2-digit currency or one this table simply doesn't know about yet - falls
+# back to DEFAULT_MINOR_UNITS rather than raising.
 CURRENCY_MINOR_UNITS = {
-    "USD": 2,
-    "EUR": 2,
-    "GBP": 2,
-    "CHF": 2,
-    "CAD": 2,
-    "AUD": 2,
-    "INR": 2,
-    "CNY": 2,
-    "MXN": 2,
-    "BRL": 2,
-    "JPY": 0,
-    "KRW": 0,
-    "CLP": 0,
-    "VND": 0,
-    "KWD": 3,
-    "BHD": 3,
-    "OMR": 3,
-    "SEK": 2,
-    "NOK": 2,
-    "DKK": 2,
-    "XAF": 0,
-    "XOF": 0,
+    # Zero decimal digits.
+    "BIF": 0,  # Burundian franc
+    "CLP": 0,  # Chilean peso
+    "DJF": 0,  # Djiboutian franc
+    "GNF": 0,  # Guinean franc
+    "ISK": 0,  # Icelandic krona
+    "JPY": 0,  # Japanese yen
+    "KMF": 0,  # Comorian franc
+    "KRW": 0,  # South Korean won
+    "PYG": 0,  # Paraguayan guarani
+    "RWF": 0,  # Rwandan franc
+    "UGX": 0,  # Ugandan shilling
+    "UYI": 0,  # Uruguay peso en unidades indexadas
+    "VND": 0,  # Vietnamese dong
+    "VUV": 0,  # Vanuatu vatu
+    "XAF": 0,  # CFA franc BEAC
+    "XOF": 0,  # CFA franc BCEAO
+    "XPF": 0,  # CFP franc
+    # Three decimal digits.
+    "BHD": 3,  # Bahraini dinar
+    "IQD": 3,  # Iraqi dinar
+    "JOD": 3,  # Jordanian dinar
+    "KWD": 3,  # Kuwaiti dinar
+    "LYD": 3,  # Libyan dinar
+    "OMR": 3,  # Omani rial
+    "TND": 3,  # Tunisian dinar
+    # Four decimal digits.
+    "CLF": 4,  # Chilean unidad de fomento
+    "UYW": 4,  # Uruguay unidad previsional
 }
 
 DEFAULT_MINOR_UNITS = 2
