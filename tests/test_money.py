@@ -1,5 +1,6 @@
 import unittest
 
+import currency_amounts
 from currency_amounts import AmountParseError, Money, format_amount, parse_amount
 
 # Each row: (label, input text, currency arg, expected Money)
@@ -226,6 +227,11 @@ class FormatAmountTests(unittest.TestCase):
         money = parse_amount("1.234,56", currency="EUR")
         rendered = format_amount(money, locale="de_DE")
         self.assertEqual(parse_amount(rendered), money)
+
+
+class PackageMetadataTests(unittest.TestCase):
+    def test_version_is_exposed(self):
+        self.assertEqual(currency_amounts.__version__, "0.1.0")
 
 
 if __name__ == "__main__":
