@@ -43,6 +43,7 @@ PARSE_CASES = [
     ("same ambiguous symbol, different candidate", "100 kr", "NOK", Money(10000, "NOK")),
     ("ambiguous symbol prefix resolved by currency arg", "Fr 100.50", "CHF", Money(10050, "CHF")),
     ("ambiguous symbol uppercase", "100 KR", "DKK", Money(10000, "DKK")),
+    ("swiss apostrophe thousands grouping", "CHF 1'234.56", None, Money(123456, "CHF")),
 ]
 
 # Each row: (label, input text, currency arg) -> must raise AmountParseError
@@ -226,6 +227,11 @@ class FormatAmountTests(unittest.TestCase):
     def test_round_trip_through_parse_and_format_with_locale(self):
         money = parse_amount("1.234,56", currency="EUR")
         rendered = format_amount(money, locale="de_DE")
+        self.assertEqual(parse_amount(rendered), money)
+
+    def test_round_trip_through_parse_and_format_with_apostrophe_locale(self):
+        money = parse_amount("1'234.56", currency="CHF")
+        rendered = format_amount(money, locale="de_CH")
         self.assertEqual(parse_amount(rendered), money)
 
 

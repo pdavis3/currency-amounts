@@ -315,8 +315,12 @@ def _split_integer_fraction(raw, minor_digits, original_text):
     else:
         integer_part, fraction_part = raw, ""
 
-    integer_part = integer_part.replace(" ", "")
-    fraction_part = fraction_part.replace(" ", "")
+    # Space and apostrophe are only ever used for thousands grouping (fr_FR
+    # and de_CH respectively), never as a decimal point, so they're safe to
+    # drop outright rather than threading them through the comma/dot
+    # decimal-vs-grouping logic above.
+    integer_part = integer_part.replace(" ", "").replace("'", "")
+    fraction_part = fraction_part.replace(" ", "").replace("'", "")
     if not integer_part:
         integer_part = "0"
     if not integer_part.isdigit() or (fraction_part and not fraction_part.isdigit()):
