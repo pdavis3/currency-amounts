@@ -17,7 +17,7 @@ from .currencies import (
 from .locales import DEFAULT_LOCALE, LOCALE_FORMATS
 
 _PARENS_RE = re.compile(r"^\((.*)\)$")
-_NUMBER_RE = re.compile(r"^[0-9](?:[0-9,.\s]*[0-9])?$")
+_NUMBER_RE = re.compile(r"^[0-9](?:[0-9,.\s']*[0-9])?$")
 
 
 class AmountParseError(ValueError):
